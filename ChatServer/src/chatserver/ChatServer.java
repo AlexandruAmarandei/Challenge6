@@ -12,6 +12,7 @@ public class ChatServer implements Runnable {
     private ServerSocket server = null;
     private Thread serverThread = null;
     private ChatServerClient serverClient;
+    private boolean openOutput = true;
 
     public ChatServer(int port) {
         try {
@@ -70,8 +71,10 @@ public class ChatServer implements Runnable {
     }
 
     public synchronized void transmitInput(int ID, String input) {
+        
         int index = findID(ID);
-        if (input.charAt(0) == '0') {
+        System.out.println(users.get(index).name + ": " + input);
+        if (input.charAt(0) == '/') {
             if (input.equals("/Exit")) {
                 users.get(index).sendMessege("/Exit");
                 remove(ID);
@@ -79,17 +82,58 @@ public class ChatServer implements Runnable {
 
                     users.get(i).sendMessege("Server: User " + ID + " has disconnected");
                 }
+            } else if (input.length() > 8 && input.substring(0, 7).equals("/Wisper")) {
+                int spaceIndex = input.indexOf(' ', 8);
+                String wisperName = input.substring(8, spaceIndex);
+                for (int i = 0; i < users.size(); i++) {
+                    if (users.get(i).name.equals(wisperName)) {
+                        users.get(i).sendMessege("Wispered from " + users.get(index).name + ": " + input.substring(spaceIndex + 1));
+                    }
+                }
+            } else if (input.equals("/Users")) {
+                for (int i = 0; i < users.size(); i++) {
+                    users.get(index).sendMessege(users.get(i).name);
+                }
+            } else {
+                users.get(index).sendMessege("Server: No command found");
             }
-        } else {
+        } else if (openOutput) {
             for (int i = 0; i < users.size(); i++) {
                 users.get(i).sendMessege(users.get(index).name + ": " + input);
             }
         }
+
     }
 
     public synchronized void serverInput(String input) {
-        for (int i = 0; i < users.size(); i++) {
-            users.get(i).sendMessege("Server: " + input);
+        if (input.substring(0, 5).equals("/Kick")) {
+            String name = input.substring(6);
+            for (int i = 0; i < users.size(); i++) {
+                if (users.get(i).name.equals(name)) {
+                    users.get(i).sendMessege("You were disconected!");
+                    users.get(i).sendMessege("/Exit");
+                    remove(users.get(i).userID);
+                }
+            }
+        } else if (input.substring(0, 5).equals("/Mute")) {
+            if (openOutput == true) {
+                for (int i = 0; i < users.size(); i++) {
+                    users.get(i).sendMessege("Server: Chat Muted");
+                }
+            }
+            openOutput = false;
+        } else if (input.substring(0, 7).equals("/UnMute")) {
+            if (openOutput == false) {
+                for (int i = 0; i < users.size(); i++) {
+                    users.get(i).sendMessege("Server: Chat Unmuted");
+                }
+            }
+            openOutput = true;
+
+        } else {
+            for (int i = 0; i < users.size(); i++) {
+                users.get(i).sendMessege("Server: " + input);
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 package chatuser;
 // The struncture and the idea comes from 
 //http://pirate.shu.edu/~wachsmut/Teaching/CSAS2214/Virtual/Lectures/chat-client-server.html
+
 import java.awt.List;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,6 +24,7 @@ public class ChatUser implements Runnable {
     private JPanel contentPane;
     private boolean verification = false;
     private List list = new List();
+
     public ChatUser(String name, int port) {
 
         JFrame frame = new JFrame();
@@ -48,17 +50,18 @@ public class ChatUser implements Runnable {
         setName.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                verification = true;
-                
-                
-                userName = nameField.getText().toString();
-                input.setText("");
-                try {
-                    out.writeUTF(userName);
-                    out.flush();
-                } catch (IOException ex) {
-                    System.out.println("Error writing username");
+
+                if (verification == false) {
+                    userName = nameField.getText().toString();
+                    input.setText("");
+                    try {
+                        out.writeUTF(userName);
+                        out.flush();
+                    } catch (IOException ex) {
+                        System.out.println("Error writing username");
+                    }
                 }
+                verification = true;
             }
 
         });
@@ -66,24 +69,26 @@ public class ChatUser implements Runnable {
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(verification){
-                try {
-                    String aux = input.getText().toString();
-                    input.setText("");
-                    out.writeUTF(aux);
-                    out.flush();
-                    //list.add(aux+ "\n");
-                } catch (IOException eio) {
-                    System.out.println("Error in writing output!");
-                    stop();
-                    userThread = null;
-                }
+                if (verification) {
+                    try {
+                        String aux = input.getText().toString();
+                        input.setText("");
+                        if (!input.equals("")) {
+                            out.writeUTF(aux);
+                            out.flush();
+                        }
+
+                        //list.add(aux+ "\n");
+                    } catch (IOException eio) {
+                        System.out.println("Error in writing output!");
+                        stop();
+                        userThread = null;
+                    }
                 }
             }
 
         });
 
-       
         sendButton.setBounds(405, 400, 80, 60);
 
         sendButton.setVisible(true);
@@ -135,7 +140,7 @@ public class ChatUser implements Runnable {
             System.out.println("Good bye!");
             stop();
         } else {
-            list.add(message+ "\n");
+            list.add(message + "\n");
             System.out.println(message);
         }
     }
